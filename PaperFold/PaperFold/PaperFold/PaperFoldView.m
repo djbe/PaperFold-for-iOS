@@ -684,17 +684,17 @@
     {
         CGAffineTransform transform = [self.contentView transform];
         // restoring the x position 3/4 of the last x translation
-        float x = transform.tx/4*3;
+        float x = (3*transform.tx + self.horizontalOffset)/4;
         transform = CGAffineTransformMakeTranslation(x, 0);
         [self.contentView setTransform:transform];
         
         // if -5<x<5, stop timer animation
-        if ((x>=0 && x<5) || (x<=0 && x>-5))
+        if ((x>=0 && x< (self.horizontalOffset + 5)) || (x<=0 && x>-(self.horizontalOffset + 5)))
         {
             [timer invalidate];
-            transform = CGAffineTransformMakeTranslation(0, 0);
+            transform = CGAffineTransformMakeTranslation(self.horizontalOffset, 0);
             [self.contentView setTransform:transform];
-            [self animateWithContentOffset:CGPointMake(0, 0) panned:NO];
+            [self animateWithContentOffset:CGPointMake(self.horizontalOffset, 0) panned:NO];
             
 			if (self.lastState != PaperFoldStateDefault) {
 				[self finishForState:PaperFoldStateDefault];

@@ -90,6 +90,9 @@ typedef void (^CompletionBlock)();
 @property (nonatomic, weak) UIView *topDividerLine;
 @property (nonatomic, weak) UIView *bottomDividerLine;
 
+// hack
+@property (nonatomic, assign) CGFloat horizontalOffset;
+
 // animate folding and unfolding when sent the offset of contentView
 // offset are either sent from pan gesture recognizer, or manual animation done with NSTimer after gesture ended
 - (void)animateWithContentOffset:(CGPoint)point panned:(BOOL)panned;
