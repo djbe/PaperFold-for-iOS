@@ -255,7 +255,7 @@
                 if (self.enableHorizontalEdgeDragging)
                 {
                     CGPoint location = [gesture locationInView:self.contentView];
-                    if (location.x < kEdgeScrollWidth || location.x > (self.contentView.frame.size.width-kEdgeScrollWidth))
+                    if (location.x < kEdgeScrollWidth + self.horizontalOffset || location.x > (self.contentView.frame.size.width-kEdgeScrollWidth))
                     {
                         self.paperFoldInitialPanDirection = PaperFoldInitialPanDirectionHorizontal;
                     }
@@ -373,7 +373,8 @@
         if (_state==PaperFoldStateDefault)
         {
             // animate folding when panned
-            [self animateWithContentOffset:point panned:YES];
+            CGPoint adjustedPoint = CGPointMake(point.x + self.horizontalOffset, point.y);
+            [self animateWithContentOffset:adjustedPoint panned:YES];
         }
         else if (_state==PaperFoldStateLeftUnfolded)
         {
@@ -388,7 +389,7 @@
     }
     else if ([gesture state]==UIGestureRecognizerStateEnded || [gesture state]==UIGestureRecognizerStateCancelled)
     {
-        float x = point.x;
+        float x = point.x + self.horizontalOffset;
         if (x>=0.0) // offset to the right
         {
             if ( (x>=kLeftViewUnfoldThreshold*self.leftFoldView.frame.size.width && _state==PaperFoldStateDefault) || [self.contentView frame].origin.x==self.leftFoldView.frame.size.width)
@@ -923,7 +924,7 @@
     if (self.enableHorizontalEdgeDragging)
     {
         CGPoint location = [gestureRecognizer locationInView:self.contentView];
-        if (location.x < kEdgeScrollWidth || location.x > (self.contentView.frame.size.width-kEdgeScrollWidth))
+        if (location.x < kEdgeScrollWidth + self.horizontalOffset || location.x > (self.contentView.frame.size.width-kEdgeScrollWidth))
         {
             
             return NO;
