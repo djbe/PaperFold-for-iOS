@@ -292,6 +292,9 @@
 
 - (void)onContentViewPannedVertically:(UIPanGestureRecognizer*)gesture
 {
+	if (!self.topFoldView && !self.bottomFoldView)
+		return;
+
     [self.rightFoldView setHidden:YES];
     [self.leftFoldView setHidden:YES];
     [self.bottomFoldView setHidden:NO];
@@ -568,6 +571,9 @@
 
 - (void)unfoldBottomView:(NSTimer*)timer
 {
+	if (!self.bottomFoldView)
+		return;
+
     [self.topFoldView setHidden:NO];
     [self.bottomFoldView setHidden:NO];
     [self.leftFoldView setHidden:YES];
@@ -602,6 +608,9 @@
     [self.bottomFoldView setHidden:YES];
     [self.leftFoldView setHidden:NO];
     [self.rightFoldView setHidden:NO];
+
+    self.paperFoldInitialPanDirection=PaperFoldInitialPanDirectionHorizontal;
+
     
     CGAffineTransform transform = [self.contentView transform];
     float x = transform.tx + (self.leftFoldView.frame.size.width-transform.tx)/4;
@@ -627,6 +636,9 @@
 // unfold the top view
 - (void)unfoldTopView:(NSTimer*)timer
 {
+	if (!self.topFoldView)
+		return;
+
     [self.topFoldView setHidden:NO];
     [self.bottomFoldView setHidden:NO];
     [self.leftFoldView setHidden:YES];
@@ -661,7 +673,9 @@
     [self.bottomFoldView setHidden:YES];
     [self.leftFoldView setHidden:NO];
     [self.rightFoldView setHidden:NO];
-    
+
+    self.paperFoldInitialPanDirection=PaperFoldInitialPanDirectionHorizontal;
+
     CGAffineTransform transform = [self.contentView transform];
     float x = transform.tx - (transform.tx+self.rightFoldView.frame.size.width)/8;
     transform = CGAffineTransformMakeTranslation(x, 0);
