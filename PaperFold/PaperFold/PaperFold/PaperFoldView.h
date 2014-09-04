@@ -53,9 +53,9 @@ typedef void (^CompletionBlock)();
 
 // main content view
 @property (nonatomic, strong) TouchThroughUIView *contentView;
-// timer to animate folds after gesture ended
-// manual animation with NSTimer is required to sync the offset of the contentView, with the folding of views
-@property (nonatomic, strong) NSTimer *animationTimer;
+// displayLink to animate folds after gesture ended
+// manual animation with CADisplayLink is required to sync the offset of the contentView, with the folding of views
+@property (nonatomic, strong) CADisplayLink *displayLink;
 // step duration for animating a frame of paper-folding. Default value is 0.01;
 @property(nonatomic) CGFloat timerStepDuration;
 // the fold view on the left and bottom
@@ -94,7 +94,7 @@ typedef void (^CompletionBlock)();
 @property (nonatomic, assign) CGFloat horizontalOffset;
 
 // animate folding and unfolding when sent the offset of contentView
-// offset are either sent from pan gesture recognizer, or manual animation done with NSTimer after gesture ended
+// offset are either sent from pan gesture recognizer, or manual animation done with CADisplayLink after gesture ended
 - (void)animateWithContentOffset:(CGPoint)point panned:(BOOL)panned;
 
 // set the right fold content view

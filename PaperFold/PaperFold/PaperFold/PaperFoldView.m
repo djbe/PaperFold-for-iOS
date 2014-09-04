@@ -83,7 +83,8 @@
 	panGestureRecognizer.delegate = self;
     [_contentView addGestureRecognizer:panGestureRecognizer];
     [panGestureRecognizer setDelegate:self];
-    
+
+	_displayLink = nil;
     _state = PaperFoldStateDefault;
     _lastState = _state;
     _enableRightFoldDragging = NO;
@@ -218,7 +219,7 @@
 - (void)onContentViewPanned:(UIPanGestureRecognizer*)gesture
 {
     // cancel gesture if another animation has not finished yet
-    if ([self.animationTimer isValid]) return;
+    if (self.self.displayLink) return;
 
     BOOL isVoiceOverRunning = UIAccessibilityIsVoiceOverRunning();
     
@@ -330,7 +331,8 @@
                 if (self.enableBottomFoldDragging)
                 {
                     // if offset more than threshold, open fully
-                    self.animationTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(unfoldBottomView:) userInfo:nil repeats:YES];
+					self.displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(unfoldBottomView)];
+					[self.displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSRunLoopCommonModes];
                     return;
                 }
             }
@@ -342,8 +344,9 @@
             {
                 if (self.enableTopFoldDragging)
                 {
-                    // if offset more than threshold, open fully
-                    self.animationTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(unfoldTopView:) userInfo:nil repeats:YES];
+					// if offset more than threshold, open fully
+					self.displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(unfoldTopView)];
+					[self.displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSRunLoopCommonModes];
                     return;
                 }
             }
@@ -351,12 +354,13 @@
         
         // after panning completes
         // if offset does not exceed threshold
-        // use NSTimer to create manual animation to restore view
+        // use CADisplayLink to create manual animation to restore view
         
         //[self setPaperFoldState:PaperFoldStateDefault];
         if ((y > 0 && self.enableTopFoldDragging) || (y < 0 && self.enableBottomFoldDragging))
         {
-            self.animationTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(restoreView:) userInfo:nil repeats:YES];
+			self.displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(restoreView)];
+			[self.displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSRunLoopCommonModes];
         }
         
 
@@ -400,7 +404,8 @@
                 if (self.enableLeftFoldDragging)
                 {
                     // if offset more than threshold, open fully
-                    self.animationTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(unfoldLeftView:) userInfo:nil repeats:YES];
+					self.displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(unfoldLeftView)];
+					[self.displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSRunLoopCommonModes];
                     return;
                 }
             }
@@ -412,7 +417,8 @@
                 if (self.enableRightFoldDragging)
                 {
                     // if offset more than threshold, open fully
-                    self.animationTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(unfoldRightView:) userInfo:nil repeats:YES];
+					self.displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(unfoldRightView)];
+					[self.displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSRunLoopCommonModes];
                     return;
                 }
             }
@@ -420,10 +426,11 @@
         
         // after panning completes
         // if offset does not exceed threshold
-        // use NSTimer to create manual animation to restore view
+        // use CADisplayLink to create manual animation to restore view
         if ((x < 0 && self.enableLeftFoldDragging) || (x > 0 && self.enableLeftFoldDragging))
         {
-            self.animationTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(restoreView:) userInfo:nil repeats:YES];
+			self.displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(restoreView)];
+			[self.displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSRunLoopCommonModes];
         }
         
         //self.paperFoldInitialPanDirection = PaperFoldInitialPanDirectionNone;
@@ -569,7 +576,7 @@
     
 }
 
-- (void)unfoldBottomView:(NSTimer*)timer
+- (void)unfoldBottomView
 {
 	if (!self.bottomFoldView)
 		return;
@@ -588,7 +595,8 @@
   
     if (-y>=self.bottomFoldView.frame.size.height-2)
     {
-        [timer invalidate];
+		[self.displayLink invalidate];
+		self.displayLink = nil;
         transform = CGAffineTransformMakeTranslation(0,-1*self.bottomFoldView.frame.size.height);
         [self.contentView setTransform:transform];
 
@@ -602,7 +610,7 @@
 }
 
 // unfold the left view
-- (void)unfoldLeftView:(NSTimer*)timer
+- (void)unfoldLeftView
 {
     [self.topFoldView setHidden:YES];
     [self.bottomFoldView setHidden:YES];
@@ -618,7 +626,8 @@
     [self.contentView setTransform:transform];
     if (x>=self.leftFoldView.frame.size.width-2)
     {
-        [timer invalidate];
+		[self.displayLink invalidate];
+		self.displayLink = nil;
         transform = CGAffineTransformMakeTranslation(self.leftFoldView.frame.size.width, 0);
         [self.contentView setTransform:transform];
         
@@ -634,7 +643,7 @@
 }
 
 // unfold the top view
-- (void)unfoldTopView:(NSTimer*)timer
+- (void)unfoldTopView
 {
 	if (!self.topFoldView)
 		return;
@@ -653,7 +662,8 @@
 
     if (y>=self.topFoldView.frame.size.height-5)
     {
-        [timer invalidate];
+		[self.displayLink invalidate];
+		self.displayLink = nil;
         transform = CGAffineTransformMakeTranslation(0,self.topFoldView.frame.size.height);
         [self.contentView setTransform:transform];
         
@@ -667,7 +677,7 @@
 }
 
 // unfold the right view
-- (void)unfoldRightView:(NSTimer*)timer
+- (void)unfoldRightView
 {
     [self.topFoldView setHidden:YES];
     [self.bottomFoldView setHidden:YES];
@@ -683,7 +693,8 @@
 
     if (x<=-self.rightFoldView.frame.size.width+5)
     {
-        [timer invalidate];
+		[self.displayLink invalidate];
+		self.displayLink = nil;
         transform = CGAffineTransformMakeTranslation(-self.rightFoldView.frame.size.width, 0);
         [self.contentView setTransform:transform];
     }
@@ -693,7 +704,7 @@
 }
 
 // restore contentView back to original position
-- (void)restoreView:(NSTimer*)timer
+- (void)restoreView
 {
     if (self.paperFoldInitialPanDirection==PaperFoldInitialPanDirectionHorizontal)
     {
@@ -706,7 +717,8 @@
         // if -5<x<5, stop timer animation
         if ((x>=0 && x< (self.horizontalOffset + 5)) || (x<=0 && x>-(self.horizontalOffset + 5)))
         {
-            [timer invalidate];
+			[self.displayLink invalidate];
+			self.displayLink = nil;
             transform = CGAffineTransformMakeTranslation(self.horizontalOffset, 0);
             [self.contentView setTransform:transform];
             [self animateWithContentOffset:CGPointMake(self.horizontalOffset, 0) panned:NO];
@@ -733,7 +745,8 @@
         // if -5<x<5, stop timer animation
         if ((y>=0 && y<5) || (y<=0 && y>-5))
         {
-            [timer invalidate];
+			[self.displayLink invalidate];
+			self.displayLink = nil;
             transform = CGAffineTransformMakeTranslation(0, 0);
             [self.contentView setTransform:transform];
             [self animateWithContentOffset:CGPointMake(0, 0) panned:NO];
@@ -807,23 +820,28 @@
     [self setIsAutomatedFolding:YES];
     if (state==PaperFoldStateDefault)
     {
-        self.animationTimer = [NSTimer scheduledTimerWithTimeInterval:_timerStepDuration target:self selector:@selector(restoreView:) userInfo:nil repeats:YES];
+		self.displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(restoreView)];
+		[self.displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSRunLoopCommonModes];
     }
     else if (state==PaperFoldStateLeftUnfolded)
     {
-        self.animationTimer = [NSTimer scheduledTimerWithTimeInterval:_timerStepDuration target:self selector:@selector(unfoldLeftView:) userInfo:nil repeats:YES];
+		self.displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(unfoldLeftView)];
+		[self.displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSRunLoopCommonModes];
     }
     else if (state==PaperFoldStateRightUnfolded)
     {
-        self.animationTimer = [NSTimer scheduledTimerWithTimeInterval:_timerStepDuration target:self selector:@selector(unfoldRightView:) userInfo:nil repeats:YES];
+		self.displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(unfoldRightView)];
+		[self.displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSRunLoopCommonModes];
     }
     else if (state==PaperFoldStateTopUnfolded)
     {
-        self.animationTimer = [NSTimer scheduledTimerWithTimeInterval:_timerStepDuration target:self selector:@selector(unfoldTopView:) userInfo:nil repeats:YES];
+		self.displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(unfoldTopView)];
+		[self.displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSRunLoopCommonModes];
     }
     else if (state==PaperFoldStateBottomUnfolded)
     {
-        self.animationTimer = [NSTimer scheduledTimerWithTimeInterval:_timerStepDuration target:self selector:@selector(unfoldBottomView:) userInfo:nil repeats:YES];
+		self.displayLink = [CADisplayLink displayLinkWithTarget: self selector: @selector(unfoldBottomView)];
+		[self.displayLink addToRunLoop: NSRunLoop.currentRunLoop forMode: NSRunLoopCommonModes];
     }
 }
 
@@ -833,17 +851,6 @@
 {
 	self.completionBlock = completion;
 	[self setPaperFoldState:state animated:animated];
-}
-
-
-- (void)unfoldLeftView
-{
-	[self setPaperFoldState:PaperFoldStateLeftUnfolded];
-}
-
-- (void)unfoldRightView
-{
-	[self setPaperFoldState:PaperFoldStateRightUnfolded];
 }
 
 - (void)restoreToCenter
